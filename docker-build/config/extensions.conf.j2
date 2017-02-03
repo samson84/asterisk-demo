@@ -1,0 +1,59 @@
+; internally called numbers
+[from-internal]
+exten =>8000,1,Goto(hello-world,s,1)
+exten =>8001,1,Goto(demo-menu,s,1)
+include=>trunks
+include=>local-users
+
+; calls to trunk, connections
+[trunks]
+
+;The 999 prefix can be used to call the external provider's domain,
+; currently the <digits only>@<trunk_server_domain> format is supported.
+exten = _999X.,1,Dial(PJSIP/trunk/sip:${EXTEN:3}@{{TRUNK_SERVER_DOMAIN}}) ;matches every extension starting with 2 and has at least an additional character
+same = n,Hangup()
+
+; dialplans, to call existing local users
+[local-users]
+exten=>6001,1,Dial(PJSIP/6001,120)
+same=> n,Hangup()
+exten=>6002,1,Dial(PJSIP/6002,120)
+same=> n,Hangup()
+
+; hello world playback demo
+[hello-world]
+exten = s,1,Answer(500)
+same = n,Wait(1)
+same = n,Playback(hello-world&goodbye)
+same = n,Hangup()
+
+; demo IVR menu
+[demo-menu]
+exten => s,1,Answer(500)
+same => n(loop),Background(press-1&press-2&press-3&or&press-4)
+same => n,WaitExten()
+same => n(goodbye), Playback(goodbye)
+same => n,Hangup()
+
+exten => 1,1,Playback(you-entered)
+same => n,SayNumber(1)
+same => n,Goto(local-users,6001,1)
+same => n,Goto(demo-menu,s,goodbye)
+
+exten => 2,1,Playback(you-entered)
+same => n,SayNumber(2)
+same => n,Goto(local-users,6002,1)
+same => n,Goto(demo-menu,s,goodbye)
+
+exten => 3,1,Playback(you-entered)
+same => n,SayNumber(3)
+same => n,Goto(trunks,999{{EXTERNAL_EXTENSION_NUMBER}},1) ;calls a specific trunk number
+same => n,Goto(demo-menu,s,goodbye)
+
+exten => 4,1,Playback(you-entered)
+same => n,SayNumber(4)
+same => n,Goto(hello-world,s,1);
+
+; none of above
+exten => i,1,Playback(option-is-invalid)
+same => n,Goto(s,loop)
