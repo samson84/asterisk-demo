@@ -33,8 +33,8 @@ RUN apt-get update -qq && \
             uuid \
             uuid-dev \
             xmlstarlet \
-            net-tools \  # add some diagnostic tools for the container
-            tcpdump \    # add some diagnostic tools for the container
+            net-tools \
+            tcpdump \
             && \
     pip install j2cli && \
     apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*

@@ -1,14 +1,24 @@
 # Asterisk demo
-A short demo for practicing Asterisk intsllation, configuration, put it into a docker.
+A short demo for practicing Asterisk installation, configuration, and usage inside a docker image.
 
-This demo creates a dockerized Asterisk server, where possible to 
-register by a SIP client. An IVR responses, when an extension is called,
-after selecting a number, a new outgoing number is dialed, and a client 
+This demo creates a dockerized Asterisk server, where possible to register by a SIP client. An IVR (Inetractive Voice 
+Response) responses, when an extension is called, after selecting a number, a new outgoing number is dialed, and a client 
 connected to it.
 
-**Note:** This demo is created for learning purpuses, not use it in real environment. 
+**Note:** This demo is created for learning purpuses, not use it in production environment. 
+
+# About this document
+
+The first part of this description is much more user friendly and application centric (Asterisk), the second part go into
+some implementation details about the under laying container solution (Docker). 
 
 # Asterisk
+
+Asterisk is an open source PBX, responsible to handle telephone calls, and manage them. Typical applications are sales,
+support, helpdesk. ***"Your call is really important for us, please press nine"*** type of systems. Responsible to manage 
+the different telecom interfaces, initiate, handle, manipulate the calls, connect the subscribers at low level. 
+
+Learn more here: [Asterisk]
 
 ## Usage
 
@@ -20,8 +30,8 @@ connected to it.
  
 ### Instructions for testing
 
-Switch off the `STUN` feature of the SIP clients for all tests and usage.
-The SIP clients should be in the same subnet with the Asterisk's docker's host. 
+Switch off the `STUN` feature of the SIP clients for all tests and usage. The SIP clients should be in the same network 
+with the Asterisk's docker's host. Zoiper VoIP client is used for testing this solution: [zoiper]. 
 
 #### A local subscriber registers and a speech path test:
  1. Get a SIP client and log in with `6001@<asterisks_server_ip>`, where the `<asterisk_server_ip>` is the docker host machine's IP address.
@@ -31,8 +41,8 @@ The SIP clients should be in the same subnet with the Asterisk's docker's host.
 #### Simple A-B call:
  1. Register an another local subscriber `6002@<asterisk_server_ip>` with `unsecurepassword` to a VoIP phone.
  2. Make a test call to extension `8000`.
- 3. Intitate a call from subscriber `6001` to `6002`.
- 4. Check, that they can hear each other
+ 3. Initiate a call from subscriber `6001` to `6002`.
+ 4. Check the 2 way speech path.
  
 #### Outbound call to 3rd party Voip call to SIP provider
  1. Check your registration credentials to a 3rd party provider in the `.env` file.
@@ -47,7 +57,7 @@ The SIP clients should be in the same subnet with the Asterisk's docker's host.
  3. Menu `2` calls the local subscriber `6002`, menu `3` calls the external provider's `EXTERNAL_EXTENSION_NUMBER`, menu `4` invokes the test 
  message. (menu `1` calls the local user `6001`).
  
-## Asterisk in short configuration
+## Asterisk configuration in short
 
 ### Local subscribers
 
@@ -71,9 +81,15 @@ The SIP clients should be in the same subnet with the Asterisk's docker's host.
 
 # Docker
 
+Docker is a container solution, responsible to explicit describe applications, services and its execution environment, also
+isolate them from each other. Provides scaling and network management over multiple hosts. The real magic is a vivid ecosystem
+created by the docker community around a bunch of pre-baked applications.
+   
+Learn more here: [Docker]
+
 ## Paths and files
- * `./docker-build`: the build directory for the docker images
- * `./dokcer-build/config`: The asterisk config files. If they have a `j2` extension, will be
+ * `./docker-build`: the build directory for the docker image.
+ * `./dokcer-build/config`: The asterisk config files location. If they have a `j2` extension, will be
    processed as a jinja2 template. (--> See below.)
  * `./env.example`: lists of used environment variables to **run** the docker image. Rename to `.env`, 
  and fill with correct values to automatically process by docker-compose. (--> See below.)
@@ -93,12 +109,14 @@ The docker imgage building is also includes the downloading, compiling and build
 build script is optimized, minimal sound files are downloaded, and the default config files are not copied
 to the default directory, it should be provide by the package user.
 
-All files from `./docker-build/config` is copied to `/etc/asterisk` during the docker image build.  
+All files from `./docker-build/config` are copied to `/etc/asterisk` during the docker image build.  
 
 ## Environment variables
 
 Environment varaiables should be set up properly in the docker image, during the docker run command to work the image 
-properly. These variables are listed and commented in the `.env.example` file. 
+properly. These variables are listed and commented in the `.env.example` file.  
+
+You most propably get an jinja2 or docker-compose missing variable error if something is missing.
 
 ## Templates
 
@@ -106,7 +124,7 @@ During the building of the image all asterisk config (`*.conf`), and config temp
 files are copied into the asterisk config dir. 
 
 When the docker image is actually run, the entrypoint script going through the `j2` files in
-the config dir, and apply them as a jinja2 template. The environment variable values in the 
+the config dir, and apply them as a jinja2 template using the `j2cli` python module. The environment variable values in the 
 docker image automatically substituted to the same variable names in the template. 
 
 For example if the `PATH` variable is exists in the docker image, and a template refers to it by
@@ -124,7 +142,25 @@ the template placeholders are substituted with the proper environment variables.
  The bottom and the top of the range is defined by environment variables (see `.env.example` file), which used in the
  `rtp.conf` config file used by asterisk's RTP channels. The binded ports should be the same on the docker container also.
  
+## Debugging the image and the config
+ 
 ## Based on
 
-This asterisk dockerfile is based on the wonderful respoke's work: https://hub.docker.com/r/respoke/asterisk/
+This asterisk dockerfile is based on the wonderful respoke's work: [Respoke asterisk image]
 with some custom modifications. Thanks.
+
+# Resources
+  * [Asterisk]: Open source communication framework.
+  * [Docker]: Containerization framework.
+  * [Respoke asterisk image]: Respoki.io implementation of the astirisk's docker containerizaion.
+  * [Jinja2 reference]: templating framework written in python
+  * [j2cli]: CLI interface for the Jinja2 framework.
+  * [Zoiper]: Free VoIP client.
+
+[Asterisk]: http://asterisk.com
+[Docker]: http://docker.com
+[Respoke asterisk image]: https://hub.docker.com/r/respoke/asterisk/
+[Jinja2 reference]: http://jinja.pocoo.org/docs/2.9/templates/ 
+[j2cli]: https://github.com/kolypto/j2cli
+[Zopier]: http://www.zoiper.com/
+
