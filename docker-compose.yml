@@ -1,0 +1,10 @@
+version: "2"
+
+services:
+  asterisk:
+    build: ./docker-build
+    image: asterisk
+    env_file: .env
+    ports:
+      - "${EXTERNAL_SIP_PORT}:${INTERNAL_SIP_PORT}/udp"
+      - "${RTP_PORTS_RANGE_START}-${RTP_PORTS_RANGE_END}:${RTP_PORTS_RANGE_START}-${RTP_PORTS_RANGE_END}/udp"

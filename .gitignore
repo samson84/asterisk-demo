@@ -1,2 +1,3 @@
 .idea
-asterisk-demo.iml
+*.iml
+.env
