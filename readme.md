@@ -134,15 +134,50 @@ After processing a j2 file, a new file created without the j2 extension, and the
 file is deleted from the config dir. For example the `rtp.conf.j2` become `rtp.conf`, after
 the template placeholders are substituted with the proper environment variables.
  
-## Exposed ports
+## Exposed ports and netorking
 
  * UDP `5060` for SIP signaling: Inside the docker container asterisk is configured to use this port for SIP signaling. See `pjsip.conf.j2`.
  This port should be exposed.
  * UDP port range for RTP media stream: The port range that can be use to stream the call content should be exposed also. 
  The bottom and the top of the range is defined by environment variables (see `.env.example` file), which used in the
  `rtp.conf` config file used by asterisk's RTP channels. The binded ports should be the same on the docker container also.
+ * This image is use the default `docker0` bridge for internal network.
  
-## Debugging the image and the config
+## Debugging the image and the asterisk config
+
+You can use the following docker run command after the building of the image to reach the image with an interactive 
+terminal, after the entry point and the template processing has been executed.
+  
+`docker run -it --env-file .env -p 5060:5060/udp -p 10000:10010/udp asterisk /bin/bash`
+
+Where `asterisk` is the image tag used for build and `.env` is the file contains the environment variabales. 
+
+Inside the container the `asterisk -c` command starts the asterisk server, also reach the asterisk console. 
+You can also start the asterisk service by `asterisk`, and after connect to it remotely using the 
+`asterisk -r`.
+
+Useful asterisk console commands:
+ * Check the registration status of the local endpoints: `pjsip show aors`
+ * Check the registration of the 3rd party VoIP provider: `pjsip show registrations`
+ * Switch on the SIP message logging: `pjsip set logger on`
+ * To check the loaded dialplan: `dialplan show`
+ * To reload the dialplan: `dialplan reload`
+ 
+Useful linux commands:
+ * Check that the asterisk service is running and listening: `netstat -nap | grep asterisk`
+ * Check that the ports are bound: `netstat -nap | grep 5060`
+ * Check the asterisk process is running: `ps -aux | grep asterisk`
+ * `ifconfig`, `cat /etc/hosts` for network setup inside the container.
+ 
+Useful docker commands:
+ * Check a running, stopped or built container details with: `docker inspect <container name>`.
+ 
+Mount the config directory as a local directory:
+
+`docker run -it --env-file .env -p 5060:5060/udp -p 10000:10010/udp -v $(pwd)/asterisk:/etc/asterisk asterisk /bin/bash`
+
+Copy the config files to the `./asterisk` before executing the command, and edit them on the fly, 
+without rebuild the continer. 
  
 ## Based on
 
